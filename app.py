@@ -2,15 +2,79 @@ from flask import Flask
 import psycopg2
 app = Flask(__name__)
 
+DB_URL = "postgresql://latencies_database_user:rDYr0nRGIeTKrQA1dnhEYyH35oiW2ME1@dpg-d79k70khg0os73e7ev00-a/latencies_database"
+
 @app.route('/')
 def hello_world():
     return 'Hello World from Stephen Enriquez in 3308'
 
 @app.route('/db_test')
 def testing():
-    conn = psycopg2.connect("postgresql://latencies_database_user:rDYr0nRGIeTKrQA1dnhEYyH35oiW2ME1@dpg-d79k70khg0os73e7ev00-a/latencies_database")
+    conn = psycopg2.connect(DB_URL)
     conn.close()
     return "Database Connection Successful"
 
+@app.route('/db_create')
+def creating():
+    conn = psycopg2.connect(DB_URL)
+    curr = conn.cursor()
+    curr.execute('''
+        CREATE TABLE IF NOT EXISTS Basketball(
+            First varchar(255),
+            Last varchar(255),
+            City varchar(255),
+            Name varchar(255),
+            Number int
+            );
+    ''')
+    conn.commit()
+    conn.close()
+    return "Basketball Table Succesfully Created"
+
+@app.route('/db_insert')
+def inserting():
+    conn = psycopg2.connect(DB_URL)
+    curr = conn.cursor()
+    curr.execute('''
+        INSERT INTO Basketball (First, Last, City, Name, Number)
+        Values
+        ('Jayson', 'Tatum', 'Boston', 'Celtics', 0),
+        ('Stephen', 'Curry', 'San Francisco', 'Warriors', 30),
+        ('Nikola', 'Jokic', 'Denver', 'Nuggets', 15),
+        ('Kawhi', 'Leonard', 'Los Angeles', 'Clippers', 2),
+        ('Stephen', 'Enriquez', 'CU Boulder', 'Team 2', 3308);
+        ''')
+    conn.commit()
+    conn.close()
+    return "Basketball Table Succesfully Created"
+
+@app.route('/db_select')
+def selecting():
+    conn = psycopg2.connect(DB_URL)
+    curr = conn.cursor()
+    curr.execute('''
+        SELECT * FROM Basketball;
+        ''')
+    records = curr.fetchall()
+    conn.close()
+    response_string=""
+    response_string+="<table>"
+    for player in records:
+        response_string+="<tr>"
+        for info in player:
+            response_string+="<td>{}</td>".format(info)
+        response_string+="</tr>"
+    response_string+="</table>"
+    return response_string
 
 
+@app.route('/db_drop')
+def dropping():
+    conn = psycopg2.connect(DB_URL)
+    curr = conn.cursor()
+    curr.execute('''
+        DROP TABLE Basketball;
+        ''')
+    conn.commit()
+    conn.close()
+    return "Basketball Table Succesfully Dropped"
